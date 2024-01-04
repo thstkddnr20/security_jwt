@@ -19,12 +19,25 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter { // OncePerRequestFilter로 매 요청마다 필터를 거치게 된다.
+
+    private final JwtService jwtService;
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization"); // 요청을 하면 헤더가 토큰과 함께 패스해야한다. authorization 헤더 생성
+        final String jwt;
+        final String userEmail;
 
+        if (authHeader == null || !authHeader.startsWith("Bearer ")){ // 조건이 충족되지 않으면 추가 처리 없이 필터체인을 계속한다.
+            filterChain.doFilter(request,response); // 다음 필터로 넘어감
+            return;
+        }
+
+        jwt = authHeader.substring(7); // 인덱스 7로 나누는 이유는 Bearer 6, 스페이스 1 해서 7개를 분리하기 위함이다.
+        userEmail = jwtService.extractUsername(jwt);//todo extract the userEmail from JWT token;
     }
 }
